@@ -1,0 +1,40 @@
+#!/bin/bash
+
+if [ "X$myhostname" != "X" ]; then
+    postconf -e "myhostname=$myhostname"
+fi
+postconf -e "mynetworks_style = subnet"
+
+mynetworks=${mynetworks:-127.0.0.0/8, 172.17.0.0/16}
+postconf -e "mynetworks = $mynetworks"
+postconf -e 'mydestination = localhost.$mydomain, localhost'
+postconf -e "inet_interfaces = all"
+postconf -e 'myorigin = $mydomain'
+
+# set relay host from first part of sasl_passwd rather than require input
+if [ -r /etc/postfix/sasl_passwd ]; then
+    relayhost=`cat /etc/postfix/sasl_passwd | awk '{print $1}'`
+    postconf -e "relayhost=$relayhost"
+    postconf -e "smtp_sasl_auth_enable = yes"
+    postconf -e "smtp_sasl_security_options = noanonymous"
+    postconf -e "smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd"
+    postconf -e "smtp_use_tls = yes"
+    postconf -e "smtp_tls_security_level = encrypt"
+    postconf -e "smtp_tls_note_starttls_offer = yes"
+else
+    echo "/etc/postfix/sasl_passwd not found, aborting..."
+    exit 1
+fi
+
+cd /etc/postfix ; 
+postmap hash:/etc/postfix/sasl_passwd; 
+chown root:root /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db; 
+chmod 0600 /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db 
+
+/etc/init.d/rsyslog start
+/etc/init.d/postfix start
+
+while [ 1 == 1 ]; do
+    sleep 60
+done
+

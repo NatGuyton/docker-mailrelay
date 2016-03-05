@@ -1,0 +1,9 @@
+docker run -d \
+        --name mailrelay \
+        --restart on-failure \
+        -p 10.1.1.8:25:25 -p 127.0.0.1:25:25 \
+        --hostname mailrelay \
+        -e myhostname=mailrelay.guyton.net \
+        -e mynetworks="10.1.1.0/24, 127.0.0.0/8, 172.17.0.0/16" \
+	-v /root/dockerfiles/docker-mailrelay/sasl_passwd:/etc/postfix/sasl_passwd \
+        guyton/mailrelay  
