@@ -1,4 +1,4 @@
-FROM guyton/centos6
+FROM amazonlinux:2
 RUN yum install -y postfix perl cyrus-sasl-plain rsyslog
 COPY master.cf /etc/postfix/
 COPY run_postfix /
